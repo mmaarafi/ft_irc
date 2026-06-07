@@ -2,3 +2,4 @@ build/
 ircserv
 .DS_Store
 tester.py
+.vscode/
