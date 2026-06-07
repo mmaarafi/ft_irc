@@ -80,7 +80,7 @@ void    Server::handlePrivmsg(Client &client, std::stringstream &ss)
         }
         return ;
     }
-    //  END BOT  
+    // BOT  
 
     if (target[0] == '#' || target[0] == '&')
         privmsgToChannel(client, target, message);

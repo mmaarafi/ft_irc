@@ -2,7 +2,7 @@
 #include "Client.hpp"
 #include "Channel.hpp"
 
-// KICK <channel> <user> [:<reason>]
+// KICK <channel> <user> :<reason>
 
 
 void    Server::handleKick(Client &client, std::stringstream &ss)
@@ -38,7 +38,6 @@ void    Server::handleKick(Client &client, std::stringstream &ss)
     if (reason.empty())
         reason = nick;
 
-    // Channel must exist 
     Channel *channel = findChannel(channelName);
     if (!channel)
     {
@@ -46,21 +45,18 @@ void    Server::handleKick(Client &client, std::stringstream &ss)
         return ;
     }
 
-    //  Kicker must be on the channel 
     if (!channel->isMember(&client))
     {
         send_error(fd, "442", nick, channelName, "You're not on that channel");
         return ;
     }
 
-    //  Kicker must be an operator 
     if (!channel->isOperator(&client))
     {
         send_error(fd, "482", nick, channelName, "You're not channel operator");
         return ;
     }
 
-    //  Target must exist and be on the channel 
     Client *target = findClientByNick(targetNick);
     if (!target || !channel->isMember(target))
     {
@@ -68,21 +64,16 @@ void    Server::handleKick(Client &client, std::stringstream &ss)
         return ;
     }
 
-    //  Broadcast KICK to everyone (including target) BEFORE removal 
     channel->broadcastMessage(getClientPrefix(client) + " KICK " + channelName + " " + targetNick + " :" + reason, NULL);
 
-    // remove from operators list if applicable 
     if (channel->isOperator(target))
         channel->removeOperator(target);
 
-    // Clean up: revoke any pending invite so they can't silently rejoin 
     if (channel->isInvited(target))
         channel->removeInvite(target);
 
-    //  Remove from channel
     channel->removeMember(target);
 
-    //  Destroy empty channel 
     if (channel->memberCount() == 0)
     {
         for (size_t i = 0; i < channel_vector.size(); i++)

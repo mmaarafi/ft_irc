@@ -3,12 +3,12 @@
 #include "Channel.hpp"
 
 /*
-        TOPIC <channel> [:<topic>]
+        TOPIC <channel> :<topic>
 
     Behaviour:
       TOPIC #chan           view current topic
       TOPIC #chan :         clear the topic 
-      TOPIC #chan :text    → set topic to "text"
+      TOPIC #chan :text    -> set topic to "text"
 
     If the channel has mode +t (topicRestricted) only operators may change the topic; any member may still view it.
 
@@ -26,7 +26,6 @@ void    Server::handleTopic(Client &client, std::stringstream &ss)
         return ;
     }
 
-    //  Channel must exist 
     Channel *channel = findChannel(chanName);
     if (!channel)
     {
@@ -34,7 +33,6 @@ void    Server::handleTopic(Client &client, std::stringstream &ss)
         return ;
     }
 
-    //  Client must be on channel 
     if (!channel->isMember(&client))
     {
         send_error(fd, "442", nick, chanName, "You're not on that channel");
@@ -46,7 +44,6 @@ void    Server::handleTopic(Client &client, std::stringstream &ss)
 
     size_t firstNonSpace = rest.find_first_not_of(" \t");
 
-    // No topic argument: view mode 
     if (firstNonSpace == std::string::npos)
     {
         if (channel->getTopic().empty())
@@ -56,25 +53,18 @@ void    Server::handleTopic(Client &client, std::stringstream &ss)
         return ;
     }
 
-    //  Topic argument provided: set/clear mode 
-
-    // Check operator restriction before doing anything
     if (channel->isTopicRestricted() && !channel->isOperator(&client))
     {
         send_error(fd, "482", nick, chanName, "You're not channel operator");
         return ;
     }
 
-    // Extract the new topic value
     std::string newTopic = rest.substr(firstNonSpace);
 
-    // Strip leading colon (IRC trailing parameter convention: ":text" -> "text")
     if (!newTopic.empty() && newTopic[0] == ':')
         newTopic = newTopic.substr(1);
 
-    // Setthe topic
     channel->setTopic(newTopic);
 
-    // Broadcast to ALL members (including the setter) so every client updates
     channel->broadcastMessage(getClientPrefix(client) + " TOPIC " + chanName + " :" + newTopic, NULL);
 }

@@ -45,8 +45,8 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re run
-
-run:
+run: all
 	./$(NAME) 8080 1337
 
+
+.PHONY: all clean fclean re run
